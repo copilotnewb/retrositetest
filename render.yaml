@@ -8,8 +8,8 @@ services:
     env: node
     plan: free
     buildCommand: |
-      cd client && npm ci && npm run build
-      cd ../server && npm ci
+      cd client && npm install && npm run build
+      cd ../server && npm install
     startCommand: node server.js
     envVars:
       - key: DATABASE_URL
