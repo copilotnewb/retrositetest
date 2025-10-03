@@ -7,6 +7,7 @@ import Games from './pages/Games'
 import Profile from './pages/Profile'
 import MemoryGame from './games/MemoryGame'
 import Snake from './games/Snake'
+import Breakout from './games/Breakout'
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="/games" element={<Games />} />
         <Route path="/games/memory" element={<MemoryGame auth={auth} />} />
         <Route path="/games/snake" element={<Snake auth={auth} />} />
+        <Route path="/games/breakout" element={<Breakout auth={auth} />} />
         <Route path="/profile" element={<Profile auth={auth} />} />
         <Route path="/login" element={<Login onAuthed={(t)=>{localStorage.setItem('token', t); auth.setToken(t); nav('/profile')}} />} />
         <Route path="/signup" element={<Signup onAuthed={(t)=>{localStorage.setItem('token', t); auth.setToken(t); nav('/profile')}} />} />
