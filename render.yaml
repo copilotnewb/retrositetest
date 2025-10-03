@@ -10,7 +10,7 @@ services:
     buildCommand: |
       cd client && npm install && npm run build
       cd ../server && npm install
-    startCommand: node server.js
+    startCommand: cd server && node server.js
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -18,3 +18,4 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+
