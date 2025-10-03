@@ -16,6 +16,11 @@ export default function Games() {
           <p className="small">Eat pellets, avoid your tail. Arrow keys to steer. Don't crash!</p>
           <Link className="btn" to="/games/snake">Play</Link>
         </div>
+        <div className="card">
+          <h3>🧱 Breakout</h3>
+          <p className="small">Smash all the bricks. Angle your shots off the paddle!</p>
+          <Link className="btn" to="/games/breakout">Play</Link>
+        </div>
       </div>
     </div>
   )
