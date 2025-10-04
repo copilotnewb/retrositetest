@@ -170,6 +170,7 @@ const SHOP_ITEMS = {
   extra_life: { baseCost: 600, maxLevel: 1 },
   start_relic: { baseCost: 450, maxLevel: 1 },
   hazard_insight: { baseCost: 300, maxLevel: 2 },
+  jukebox_track2: { baseCost: 50, maxLevel: 1 },
 };
 
 function costForLevel(item, currentLevel) {
