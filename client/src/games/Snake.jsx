@@ -31,6 +31,13 @@ const SHOP_ITEMS = [
     baseCost: 300,
     maxLevel: 2,
   },
+  {
+    key: 'jukebox_track2',
+    name: 'Jukebox Track: Chiptune II',
+    description: 'Unlocks a second background song for the site jukebox.',
+    baseCost: 50,
+    maxLevel: 1,
+  },
 ]
 
 const RELIC_LIBRARY = [
@@ -183,6 +190,13 @@ export default function Snake({ auth }) {
     metaRef.current = meta
   }, [meta])
 
+  const applyMetaUpdate = (nextMeta) => {
+    setMeta(nextMeta)
+    if (typeof window !== 'undefined' && nextMeta) {
+      window.dispatchEvent(new CustomEvent('snake-meta-update', { detail: nextMeta }))
+    }
+  }
+
   useEffect(() => () => {
     if (messageTimerRef.current) clearTimeout(messageTimerRef.current)
   }, [])
@@ -190,7 +204,7 @@ export default function Snake({ auth }) {
   useEffect(() => {
     let cancelled = false
     if (!auth?.token) {
-      setMeta({ essence: 0, upgrades: {} })
+      applyMetaUpdate({ essence: 0, upgrades: {} })
       setMetaReady(true)
       return
     }
@@ -203,7 +217,7 @@ export default function Snake({ auth }) {
         if (!cancelled) {
           if (res.ok) {
             const data = await res.json()
-            setMeta(data.meta)
+            applyMetaUpdate(data.meta)
           }
           setMetaReady(true)
         }
@@ -490,7 +504,7 @@ export default function Snake({ auth }) {
           })
           if (res.ok) {
             const data = await res.json()
-            setMeta(data.meta)
+            applyMetaUpdate(data.meta)
             flashMessage(`💎 Banked ${essenceEarned} essence`)
           }
         } catch (e) {
@@ -649,8 +663,11 @@ export default function Snake({ auth }) {
       })
       if (res.ok) {
         const data = await res.json()
-        setMeta(data.meta)
-        flashMessage(`🛠 Upgraded ${item.name}`)
+        applyMetaUpdate(data.meta)
+        const message = item.key === 'jukebox_track2'
+          ? '🎵 Unlocked Chiptune II in the jukebox!'
+          : `🛠 Upgraded ${item.name}`
+        flashMessage(message)
       } else {
         const err = await res.json().catch(() => ({ error: 'Cannot purchase' }))
         flashMessage(err.error || 'Cannot purchase')

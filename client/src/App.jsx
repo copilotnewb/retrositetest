@@ -42,7 +42,7 @@ export default function App() {
           <Link to="/profile" className="btn">Profile</Link>
         </div>
         <div className="flex">
-          <MusicPlayer />
+          <MusicPlayer auth={auth} />
           {auth.user ? (
             <>
               <span className="badge">Hi, {auth.user.username}</span>
