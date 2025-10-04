@@ -8,6 +8,7 @@ import Profile from './pages/Profile'
 import MemoryGame from './games/MemoryGame'
 import Snake from './games/Snake'
 import Breakout from './games/Breakout'
+import MusicPlayer from './components/MusicPlayer'
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -41,6 +42,7 @@ export default function App() {
           <Link to="/profile" className="btn">Profile</Link>
         </div>
         <div className="flex">
+          <MusicPlayer />
           {auth.user ? (
             <>
               <span className="badge">Hi, {auth.user.username}</span>
