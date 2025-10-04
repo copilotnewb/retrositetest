@@ -47,6 +47,14 @@ async function initDb() {
     );
     CREATE INDEX IF NOT EXISTS scores_game_idx ON scores(game);
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS snake_meta (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      essence INTEGER NOT NULL DEFAULT 0,
+      upgrades JSONB NOT NULL DEFAULT '{}'::jsonb,
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
   console.log("DB ready");
 }
 initDb().catch(e => {
@@ -150,6 +158,85 @@ app.post("/api/scores", auth, async (req, res) => {
   try {
     const result = await pool.query("INSERT INTO scores(user_id, game, score) VALUES ($1,$2,$3) RETURNING *", [req.user.id, game, score]);
     res.json({ saved: result.rows[0] });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Snake meta progression
+const SHOP_ITEMS = {
+  food_bonus: { baseCost: 150, maxLevel: 3 },
+  extra_life: { baseCost: 600, maxLevel: 1 },
+  start_relic: { baseCost: 450, maxLevel: 1 },
+  hazard_insight: { baseCost: 300, maxLevel: 2 },
+};
+
+function costForLevel(item, currentLevel) {
+  return item.baseCost * (currentLevel + 1);
+}
+
+async function ensureSnakeMeta(userId) {
+  const result = await pool.query(
+    `INSERT INTO snake_meta(user_id, essence, upgrades) VALUES ($1,0,'{}')
+     ON CONFLICT (user_id) DO UPDATE SET updated_at = NOW()
+     RETURNING user_id, essence, upgrades`,
+    [userId]
+  );
+  return result.rows[0];
+}
+
+app.get("/api/snake/meta", auth, async (req, res) => {
+  try {
+    const meta = await ensureSnakeMeta(req.user.id);
+    res.json({ meta });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/api/snake/meta/earn", auth, async (req, res) => {
+  const { earned } = req.body || {};
+  const value = Number.isFinite(earned) ? Math.max(0, Math.floor(earned)) : null;
+  if (value == null) return res.status(400).json({ error: "earned must be a number" });
+  try {
+    const meta = await ensureSnakeMeta(req.user.id);
+    const result = await pool.query(
+      "UPDATE snake_meta SET essence = essence + $1, updated_at = NOW() WHERE user_id=$2 RETURNING user_id, essence, upgrades",
+      [value, req.user.id]
+    );
+    res.json({ meta: result.rows[0] });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/api/snake/meta/purchase", auth, async (req, res) => {
+  const { upgradeKey } = req.body || {};
+  if (!upgradeKey || !SHOP_ITEMS[upgradeKey]) {
+    return res.status(400).json({ error: "Unknown upgrade" });
+  }
+  try {
+    const meta = await ensureSnakeMeta(req.user.id);
+    const upgrades = meta.upgrades || {};
+    const currentLevel = upgrades[upgradeKey] || 0;
+    const item = SHOP_ITEMS[upgradeKey];
+    if (currentLevel >= item.maxLevel) {
+      return res.status(400).json({ error: "Upgrade already maxed" });
+    }
+    const cost = costForLevel(item, currentLevel);
+    if (meta.essence < cost) {
+      return res.status(400).json({ error: "Not enough essence" });
+    }
+    const newLevel = currentLevel + 1;
+    const newUpgrades = { ...upgrades, [upgradeKey]: newLevel };
+    const result = await pool.query(
+      "UPDATE snake_meta SET essence = essence - $1, upgrades = $2, updated_at = NOW() WHERE user_id=$3 RETURNING user_id, essence, upgrades",
+      [cost, newUpgrades, req.user.id]
+    );
+    res.json({ meta: result.rows[0] });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Server error" });
